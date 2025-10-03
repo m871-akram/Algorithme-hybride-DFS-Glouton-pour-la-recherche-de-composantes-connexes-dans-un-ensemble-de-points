@@ -9,6 +9,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 from geo.point import Point
+from connectes import print_components_sizes
 
 
 def lire_fichier_points(nom_fichier):
@@ -96,68 +97,6 @@ def calcul_tailles_composantes_dfs_classique(distance, points):
     return tailles
 
 
-def calcul_tailles_composantes_hybride_dfs_glouton(distance, points, k=8):
-    """
-    Calcule les tailles des composantes avec un algorithme hybride (glouton + DFS).
-    """
-    if not points:
-        print("[]")
-        return []
-
-    n = len(points)
-    visites = [False] * n
-    tailles = []
-
-    def cluster_gourmand(depart):
-        composante = [depart]
-        visites[depart] = True
-        pile = [depart]
-        while pile:
-            if len(composante) > k:
-                return composante, True
-            courant = pile.pop()
-            for voisin in range(n):
-                if not visites[voisin] and points[courant].distance_to(points[voisin]) <= distance:
-                    composante.append(voisin)
-                    pile.append(voisin)
-                    visites[voisin] = True
-        return composante, False
-
-    def dfs(composante_initiale):
-        # Continue l'exploration à partir des points déjà dans composante_initiale
-        taille_composante = len(composante_initiale)
-        pile = composante_initiale.copy()  # Commencer avec tous les points de la composante initiale
-        while pile:
-            courant = pile.pop()
-            for voisin in range(n):
-                if not visites[voisin] and points[courant].distance_to(points[voisin]) <= distance:
-                    pile.append(voisin)
-                    visites[voisin] = True
-                    taille_composante += 1
-        return taille_composante
-
-    for i in range(n):
-        if not visites[i]:
-            composante, basculer = cluster_gourmand(i)
-            if basculer:
-                taille = dfs(composante)  # Passer la composante entière à dfs
-            else:
-                taille = len(composante)
-            tailles.append(taille)
-
-    tailles.sort(reverse=True)
-    if not tailles:
-        print("[]")
-    else:
-        sortie = "["  
-        for i in range(len(tailles)):
-            sortie += str(tailles[i]) 
-            if i < len(tailles) - 1:
-                sortie += ", "  
-        sortie += "]"  
-        print(sortie)
-    return tailles
-
 
 def visualiser_composantes(points, tailles, n, titre="Composantes"):
     """
@@ -195,17 +134,30 @@ def mesurer_performance(nom_fichier, algorithme, k=None):
     if not points:
         print(f"[]  # {nom_fichier} (0 points)")
         return float('inf'), [], points
-    
+
     debut = time.time()
-    if k is None:
-        tailles = algorithme(distance, points)
+
+    if algorithme == "hybride":
+        # utilise l'algo importé depuis connectes.py
+        from connectes import print_components_sizes
+        tailles = print_components_sizes(distance, points)
+    elif k is None:
+        # DFS classique
+        tailles = calcul_tailles_composantes_dfs_classique(distance, points)
     else:
+        # si jamais on rajoute d'autres variantes plus tard
         tailles = algorithme(distance, points, k)
+
     temps_ms = (time.time() - debut) * 1000
-    
-    nom_algo = algorithme.__name__.replace("calcul_tailles_composantes_", "")
-    if k is not None:
-        nom_algo += f" (k={k})"
+
+    # nom affiché propre
+    if algorithme == "hybride":
+        nom_algo = f"hybride (k={k})"
+    else:
+        nom_algo = algorithme.__name__.replace("calcul_tailles_composantes_", "")
+        if k is not None:
+            nom_algo += f" (k={k})"
+
     print(f"# {nom_algo} - {nom_fichier} ({len(points)} points) : {temps_ms:.2f} ms")
     return temps_ms, tailles, points
 
@@ -217,28 +169,47 @@ def principal():
     fichiers = [f"exemple_{i}.pts" for i in range(1, 5)]
     algorithmes = [
         (calcul_tailles_composantes_dfs_classique, None),
-        (calcul_tailles_composantes_hybride_dfs_glouton, 8)
+        ("hybride", 8)   # appelera print_components_sizes depuis connectes.py
     ]
 
     print("Comparaison DFS Classique vs DFS-Glouton (k=8) sur fichiers exemple_*.pts")
-    donnees_performance = {f"{algo[0].__name__.replace('calcul_tailles_composantes_', '')}{f' (k={algo[1]})' if algo[1] is not None else ''}": [] for algo in algorithmes}
+
+    # Construction du dictionnaire vide pour stocker les temps
+    donnees_performance = {}
+    for algo, k in algorithmes:
+        if isinstance(algo, str) and algo == "hybride":
+            nom_algo = f"{algo} (k={k})"
+        else:
+            nom_algo = algo.__name__.replace("calcul_tailles_composantes_", "")
+            if k is not None:
+                nom_algo += f" (k={k})"
+        donnees_performance[nom_algo] = []
+
     nombres_points = []
 
+    # Boucle sur les fichiers
     for fichier in fichiers:
         print(f"\nTest sur {fichier} :")
         nombres_points.append(0)
         for algo, k in algorithmes:
             temps_moyen, tailles, points = mesurer_performance(fichier, algo, k)
             if points:  # Only append if the file was successfully processed
-                algo_nom = f"{algo.__name__.replace('calcul_tailles_composantes_', '')}{f' (k={k})' if k is not None else ''}"
+                if isinstance(algo, str) and algo == "hybride":
+                    algo_nom = f"{algo} (k={k})"
+                else:
+                    algo_nom = algo.__name__.replace("calcul_tailles_composantes_", "")
+                    if k is not None:
+                        algo_nom += f" (k={k})"
+
                 donnees_performance[algo_nom].append(temps_moyen)
+
                 if nombres_points[-1] == 0:
                     nombres_points[-1] = len(points)
-                # Comment out visualization to reduce clutter, uncomment if needed
-                # visualiser_composantes(points, tailles, len(points), f"Composantes pour {fichier} ({algo_nom})")
 
-    # Tracé des performances (commented out by default)
+                # Visualisation (décommenter si nécessaire)
+                visualiser_composantes(points, tailles, len(points), f"Composantes pour {fichier} ({algo_nom})")
 
+    # Tracé des performances
     plt.figure(figsize=(10, 6))
     for nom_algo, temps in donnees_performance.items():
         plt.plot(nombres_points[:len(temps)], temps, marker='o', label=nom_algo)
@@ -249,8 +220,6 @@ def principal():
     plt.grid(True)
     plt.tight_layout()
     plt.show()
-
-
 
 if __name__ == "__main__":
     principal()

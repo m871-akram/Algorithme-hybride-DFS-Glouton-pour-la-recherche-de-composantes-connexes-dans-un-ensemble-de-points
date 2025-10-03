@@ -88,4 +88,6 @@ def main():
         print_components_sizes(distance, points)
 
 
-main()
+
+if __name__ == "__main__":
+    main()
