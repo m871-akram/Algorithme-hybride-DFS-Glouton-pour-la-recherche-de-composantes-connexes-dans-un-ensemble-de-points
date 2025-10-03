@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-compute sizes of all connected components.
-sort and display.
+Compute sizes of all connected components using hybrid greedy+DFS.
+Parallelize the computation of clusters with multiprocessing.
 """
 
-from timeit import timeit
+import multiprocessing as mp
 from sys import argv
-
 from geo.point import Point
 
 
@@ -23,69 +22,97 @@ def load_instance(filename):
     return distance, points
 
 
-def print_components_sizes(distance, points):
+def compute_cluster(start_index, distance, points, visites, k=8):
     """
-    affichage des tailles triees de chaque composante
+    Calcule la taille d'une composante connexe en partant du point start_index.
+    On suppose que start_index n'a pas encore été visité.
     """
     n = len(points)
-    visites = [False] * n
+
+    if visites[start_index]:
+        return 0
+
+    visites[start_index] = True
+    composante = [start_index]
+    pile = [start_index]
+
+    # phase glouton
+    while pile:
+        if len(composante) > k:
+            break  # bascule en DFS classique
+        courant = pile.pop()
+        for voisin in range(n):
+            if not visites[voisin] and points[courant].distance_to(points[voisin]) <= distance:
+                visites[voisin] = True
+                composante.append(voisin)
+                pile.append(voisin)
+
+    # DFS complet si nécessaire
+    taille_composante = len(composante)
+    while pile:
+        courant = pile.pop()
+        for voisin in range(n):
+            if not visites[voisin] and points[courant].distance_to(points[voisin]) <= distance:
+                visites[voisin] = True
+                taille_composante += 1
+                pile.append(voisin)
+
+    return taille_composante
+
+
+def print_components_sizes(distance, points, verbose=True):
+    """
+    Calcule et affiche les tailles triees des composantes en parallèle.
+    """
+    n = len(points)
+    if n == 0:
+        return []
+
+    manager = mp.Manager()
+    visites = manager.list([False] * n)  # shared list for visited flags
+
     tailles = []
-    k=8 # on a choisi k=8 car c est suppose etre le plus optimal ( voir pdf )
+    with mp.Pool(processes=mp.cpu_count()) as pool:
+        results = []
+        for i in range(n):
+            if not visites[i]:
+                results.append(pool.apply_async(compute_cluster, (i, distance, points, visites)))
 
-    def glouton(depart):
-        composante = [depart]
-        visites[depart] = True
-        pile = [depart]
-        while pile:
-            if len(composante) > k:
-                return composante, True
-            courant = pile.pop()
-            for voisin in range(n):
-                if not visites[voisin] and points[courant].distance_to(points[voisin]) <= distance:
-                    composante.append(voisin)
-                    pile.append(voisin)
-                    visites[voisin] = True
-        return composante, False
-
-    def dfs(composante_initiale): # pour ce dfs on adopte une approche iterative pour eviter les recurssions limit errors 
-        # Continue l exploration a partir des points deja dans composante initiale
-        taille_composante = len(composante_initiale)
-        pile = composante_initiale.copy()  # Commencer avec tous les points de la composante initiale
-        while pile:
-            courant = pile.pop()
-            for voisin in range(n):
-                if not visites[voisin] and points[courant].distance_to(points[voisin]) <= distance:
-                    pile.append(voisin)
-                    visites[voisin] = True
-                    taille_composante += 1
-        return taille_composante
-
-    for i in range(n):
-        if not visites[i]:
-            composante, basculer = glouton(i)
-            if basculer:
-                taille = dfs(composante)  # Passer la composante entiere a dfs
-            else:
-                taille = len(composante)
-            tailles.append(taille)
+        tailles = [res.get() for res in results if res.get() > 0]
 
     tailles.sort(reverse=True)
 
-    sortie = "["  
-    for i in range(len(tailles)):
-        sortie += str(tailles[i]) 
-        if i < len(tailles) - 1:
-            sortie += ", "  
-    sortie += "]"  
-    print(sortie)
+    if verbose:
+        print("[" + ", ".join(map(str, tailles)) + "]")
+
     return tailles
+
+
+def process_instance(filename):
+    """
+    Charge et traite un fichier .pts
+    """
+    try:
+        distance, points = load_instance(filename)
+        print(f"# {filename} ({len(points)} points)")
+        return filename, print_components_sizes(distance, points)
+    except Exception as e:
+        print(f"Erreur lors du traitement de {filename} : {e}")
+        return filename, []
+
+
 def main():
     """
-    ne pas modifier: on charge une instance et on affiche les tailles
+    Traite les fichiers donnés en ligne de commande
     """
-    for instance in argv[1:]:
-        distance, points = load_instance(instance)
-        print_components_sizes(distance, points)
+    instances = argv[1:]
+    if not instances:
+        print("Usage: python connectes.py fichier1.pts fichier2.pts ...")
+        return
+
+    for instance in instances:
+        process_instance(instance)
 
 
-main()
+if __name__ == "__main__":
+    main()
