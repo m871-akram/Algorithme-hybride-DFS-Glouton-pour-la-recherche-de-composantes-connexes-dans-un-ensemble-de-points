@@ -9,16 +9,10 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 from connectes import print_components_sizes
-from dfs_connectes import lire_fichier_points, calcul_tailles_composantes_dfs_classique
+from dfs_connectes import load_instance, calcul_tailles_composantes_dfs_classique
 
 
 # ----------- UTILS -----------
-
-def algo_name(algo, k):
-    """Retourne le nom affiché d’un algorithme"""
-    name = algo.__name__.replace("calcul_tailles_composantes_", "").replace("print_components_sizes", "hybride")
-    return f"{name} (k={k})" if k is not None else name
-
 
 def visualiser_composantes(points, tailles, titre="Composantes"):
     """Visualise les composantes connexes avec des couleurs distinctes."""
@@ -42,9 +36,9 @@ def visualiser_composantes(points, tailles, titre="Composantes"):
     plt.show()
 
 
-def mesurer_performance(nom_fichier, algo, k=None):
+def mesurer_performance(nom_fichier, algo, algo_nom, k=None):
     """Mesure le temps d'exécution d'un algorithme sur un fichier."""
-    distance, points = lire_fichier_points(nom_fichier)
+    distance, points = load_instance(nom_fichier)
     if not points:
         print(f"[]  # {nom_fichier} (0 points)")
         return float('inf'), [], points
@@ -53,8 +47,7 @@ def mesurer_performance(nom_fichier, algo, k=None):
     tailles = algo(distance, points) if k is None else algo(distance, points, k)
     temps_ms = (time.time() - debut) * 1000
 
-    nom_algo = algo_name(algo, k)
-    print(f"# {nom_algo} - {nom_fichier} ({len(points)} points) : {temps_ms:.2f} ms")
+    print(f"# {algo_nom} - {nom_fichier} ({len(points)} points) : {temps_ms:.2f} ms")
     return temps_ms, tailles, points
 
 
@@ -72,36 +65,35 @@ def main():
         return
 
     algorithmes = [
-        # (calcul_tailles_composantes_dfs_classique, None),
-        (print_components_sizes, 8)   # directly use the imported function
+        ("DFS Classique", calcul_tailles_composantes_dfs_classique, None),
+        ("Hybride Glouton (k=8)", print_components_sizes, 8)
     ]
 
     print("Comparaison DFS Classique vs DFS-Glouton (k=8) sur fichiers exemple_*.pts")
 
-    donnees_performance = {algo_name(a, k): [] for a, k in algorithmes}
+    donnees_performance = {nom: [] for nom, _, _ in algorithmes}
     nombres_points = []
 
     for fichier in fichiers:
         print(f"\nTest sur {os.path.basename(fichier)} :")
         nombres_points.append(0)
 
-        for algo, k in algorithmes:
-            temps, tailles, points = mesurer_performance(fichier, algo, k)
+        for algo_nom, algo, k in algorithmes:
+            temps, tailles, points = mesurer_performance(fichier, algo, algo_nom, k)
             if not points:
                 continue
 
-            nom_algo = algo_name(algo, k)
-            donnees_performance[nom_algo].append(temps)
+            donnees_performance[algo_nom].append(temps)
             if nombres_points[-1] == 0:
                 nombres_points[-1] = len(points)
 
             # Visualisation (décommenter si nécessaire)
-            visualiser_composantes(points, tailles, f"Composantes pour {os.path.basename(fichier)} ({nom_algo})")
+            # visualiser_composantes(points, tailles, f"Composantes pour {os.path.basename(fichier)} ({algo_nom})")
 
     # Tracé des performances
     plt.figure(figsize=(10, 6))
-    for nom_algo, temps in donnees_performance.items():
-        plt.plot(nombres_points[:len(temps)], temps, marker='o', label=nom_algo)
+    for algo_nom, temps in donnees_performance.items():
+        plt.plot(nombres_points[:len(temps)], temps, marker='o', label=algo_nom)
     plt.xlabel("Nombre de points")
     plt.ylabel("Temps d'exécution (ms)")
     plt.title("Comparaison DFS Classique vs DFS-Glouton (k=8)")

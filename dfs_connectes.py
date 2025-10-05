@@ -1,37 +1,28 @@
 #!/usr/bin/env python3
 """
 Module contenant :
-- lecture d'un fichier de points .pts
+- lecture d'un fichier de points .pts (via load_instance)
 - calcul des composantes connexes avec DFS classique
 """
 
 from geo.point import Point
 
 
-def lire_fichier_points(nom_fichier):
+def load_instance(filename):
     """
-    Lit un fichier de points au format : distance en première ligne, puis x, y par ligne.
-    Retourne (distance, points).
+    Charge un fichier .pts :
+    Première ligne = distance limite,
+    puis les coordonnées x,y séparées par des virgules.
+    Retourne (distance, points)
     """
     try:
-        with open(nom_fichier, 'r') as f:
-            lignes = f.readlines()
-        # Première ligne : distance
-        distance = float(lignes[0].strip())
-        points = []
-        for ligne in lignes[1:]:
-            ligne = ligne.strip()
-            if not ligne:
-                continue
-            try:
-                x, y = map(float, ligne.split(', '))
-                points.append(Point([x, y]))
-            except ValueError as e:
-                print(f"Erreur de format dans la ligne : {ligne} ({e})")
-                continue
+        with open(filename, "r") as instance_file:
+            lines = iter(instance_file)
+            distance = float(next(lines).strip())
+            points = [Point([float(f) for f in line.split(",")]) for line in lines if line.strip()]
         return distance, points
     except Exception as e:
-        print(f"Erreur lors de la lecture de {nom_fichier} : {e}")
+        print(f"Erreur lors de la lecture de {filename} : {e}")
         return None, []
 
 
@@ -74,7 +65,26 @@ def calcul_tailles_composantes_dfs_classique(distance, points):
     if not tailles:
         print("[]")
     else:
-        sortie = "[" + ", ".join(map(str, tailles)) + "]"
-        print(sortie)
+        print("[" + ", ".join(map(str, tailles)) + "]")
 
     return tailles
+
+
+def main():
+    """
+    Permet de lancer le calcul sur un fichier donné en argument.
+    """
+    from sys import argv
+    if len(argv) < 2:
+        print("Usage: python dfs_connectes.py fichier.pts")
+        return
+
+    for filename in argv[1:]:
+        distance, points = load_instance(filename)
+        if distance is not None:
+            print(f"# {filename} ({len(points)} points)")
+            calcul_tailles_composantes_dfs_classique(distance, points)
+
+
+if __name__ == "__main__":
+    main()
