@@ -1,121 +1,119 @@
-
-
 # Algorithme Hybride DFS-Glouton pour la Recherche de Composantes Connexes
 
-## 📋 Description
+## Aperçu
+Ce dépôt compare deux stratégies pour regrouper des points 2D en composantes connexes en fonction d'un seuil de distance. Il met face à face :
 
-Ce projet implémente et compare deux algorithmes pour identifier les composantes connexes dans un ensemble de points 2D basés sur un seuil de distance :
+1. un parcours en profondeur (DFS) récursif classique ;
+2. une variante hybride combinant une heuristique gloutonne et un DFS parallélisé via `multiprocessing`.
 
-1. **DFS Classique** : Parcours en profondeur récursif standard
-2. **Algorithme Hybride DFS-Glouton** : Approche optimisée combinant une phase gloutonne avec DFS, utilisant le multiprocessing pour améliorer les performances
+Les scripts permettent de charger des jeux de points, de calculer les composantes, de visualiser les regroupements et de mesurer les gains de performance.
 
-Dans l'analyse de réseaux et l'apprentissage automatique (comme K-means), il est crucial d'identifier les groupes d'éléments qui partagent une proximité géométrique. Ce projet explore différentes approches pour résoudre ce problème efficacement.
+## Fonctionnalités majeures
+- Calcul des composantes connexes avec DFS classique ou approche hybride parallèle.
+- Chargement de fichiers `.pts` et génération de jeux synthétiques.
+- Comparaison de performances avec graphiques `matplotlib`.
+- Visualisation optionnelle des composantes (coloration par cluster).
+- Rapport PDF détaillant méthodologie et résultats.
 
-## 🚀 Fonctionnalités
-
-- **Calcul de composantes connexes** avec deux algorithmes différents
-- **Parallélisation** via multiprocessing pour l'algorithme hybride
-- **Visualisation** des composantes avec des couleurs distinctes
-- **Comparaison de performance** entre les deux approches
-- **Support de fichiers `.pts`** contenant des ensembles de points
-- **Génération de graphiques** comparatifs des temps d'exécution
-
-## 📦 Prérequis
-
-- Python 3.13.7
-- Packages Python : `matplotlib`, `numpy`
-
-Les dépendances sont déjà installées dans l'environnement conda du projet.
-
-## 📁 Structure du Projet
-```
-
+## Structure du projet
+```text
 .
-├── connectes.py              # Algorithme hybride DFS-Glouton (parallélisé)
-├── dfs_connectes.py          # Algorithme DFS classique
-├── courbe_performance.py     # Script de comparaison et visualisation
-├── generates_pts.py          # Générateur de fichiers de test
-├── exemple_*.pts             # Fichiers de test avec points 2D
-├── geo/                      # Module géométrique (Point, Segment, etc.)
-└── README.md                 # Ce fichier
+├── connectes.py              # Algorithme hybride DFS-Glouton (multiprocessing)
+├── courbe_performance.py     # Benchmark et visualisations
+├── dfs_connectes.py          # Implémentation DFS classique
+├── generates_pts.py          # Générateur de fichiers .pts aléatoires
+├── exemple_*.pts             # Jeux de test fournis
+├── LeLabyrinthe/             # Générateur de labyrinthes et rendu PNG
+├── geo/                      # Primitives géométriques (Point, Segment, ...)
+├── rapport.pdf               # Analyse technique détaillée
+└── README.md                 # Documentation
 ```
-## 🎯 Utilisation
 
-### Calcul avec DFS Classique
+## Prise en main
 
+### Prérequis
+- Python 3.10 ou plus récent.
+- `pip` ou `pipx` pour installer les dépendances.
+- `matplotlib` et `numpy` pour les graphes et visualisations.
+- (Optionnel) `Pillow` si vous utilisez le module `LeLabyrinthe`.
+
+### Installation rapide
+1. (Optionnel) Créez un environnement virtuel :
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Windows : .\.venv\Scripts\activate
+   ```
+2. Installez les dépendances nécessaires :
+   ```bash
+   pip install matplotlib numpy
+   ```
+
+### Vérification rapide
 ```bash
-python dfs_connectes.py exemple_1.pts exemple_2.pts
-```
-```
-
-
-### Calcul avec Algorithme Hybride
-
-```shell script
-python connectes.py exemple_1.pts exemple_2.pts
+python dfs_connectes.py exemple_1.pts
+python connectes.py exemple_1.pts
 ```
 
-
-### Comparaison de Performance
-
-```shell script
-python courbe_performance.py
+## Format des fichiers `.pts`
 ```
-
-
-Ce script :
-- Teste automatiquement tous les fichiers `exemple_*.pts`
-- Affiche les tailles des composantes connexes
-- Mesure les temps d'exécution
-- Génère un graphique comparatif
-
-## 📊 Format des Fichiers `.pts`
-
-```
-distance_limite
+distance_max
 x1,y1
 x2,y2
-x3,y3
 ...
 ```
-
-
-**Exemple :**
+Exemple :
 ```
 1.5
 0.0,0.0
 1.0,1.0
 5.0,5.0
 ```
+La première ligne fixe la distance maximale autorisée. Deux points appartiennent à la même composante si leur distance est inférieure ou égale à cette valeur.
 
+## Utilisation des scripts
 
-La première ligne définit le seuil de distance. Deux points appartiennent à la même composante connexe s'ils sont à une distance ≤ `distance_limite`.
+#### DFS classique
+Calcule les tailles des composantes dans l'ordre décroissant.
+```bash
+python dfs_connectes.py exemple_1.pts exemple_2.pts
+```
 
-## 🔬 Algorithmes
+#### Algorithme hybride DFS-Glouton
+Version parallèle reposant sur une croissance gloutonne initiale puis DFS. Affiche les tailles triées.
+```bash
+python connectes.py exemple_1.pts exemple_3.pts
+```
 
-### DFS Classique
-- Parcours en profondeur récursif
-- Complexité : O(n²) où n est le nombre de points
-- Simple mais peut être lent sur de grands ensembles
+#### Comparaison de performances
+Exécute automatiquement les deux algorithmes sur tous les fichiers `exemple_*.pts`, mesure les temps et trace une courbe comparative.
+```bash
+python courbe_performance.py
+```
+> `matplotlib` ouvre une fenêtre interactive ; utilisez un backend non interactif (`MPLBACKEND=Agg`) si vous travaillez sur un serveur sans affichage.
 
-### Hybride DFS-Glouton (k=8)
-- **Phase gloutonne** : Croissance rapide jusqu'à k voisins
-- **Phase DFS** : Parcours complet pour les composantes > k
-- **Parallélisation** : Utilise tous les cœurs CPU disponibles
-- Optimisé pour de grands ensembles de points
+#### Génération de jeux de données
+Crée un fichier `.pts` de taille arbitraire afin d'alimenter les scripts de calcul.
+```bash
+python generates_pts.py 200 data/mon_jeu.pts 0.05
+```
+Arguments : nombre de points, chemin de sortie (relatif ou absolu) et seuil de distance (optionnel, 0.1 par défaut).
 
-## 📈 Résultats
+## Module LeLabyrinthe
+Le dossier `LeLabyrinthe/` contient un générateur de labyrinthes basé sur une exploration DFS. Il produit une image `maze.png` représentant la grille.
 
-Le script de comparaison affiche :
-- Tailles des composantes triées par ordre décroissant : `[10, 5, 3, 1]`
-- Temps d'exécution en millisecondes
-- Graphique comparatif des performances
+- Dépendances : `Pillow` (installable via `pip install pillow`).
+- Exécution :
+  ```bash
+  python LeLabyrinthe/Labyrinthe.py
+  ```
+- Le script vous demande la taille du labyrinthe ainsi que la case de départ, puis enregistre le résultat dans `LeLabyrinthe/maze.png`. Les classes utilitaires `cell.py` et `maze.py` peuvent servir d'exemple d'utilisation de DFS sur une structure quadrillée.
 
-## 📄 Rapport
+## Visualisation optionnelle
+La fonction `visualiser_composantes` de `courbe_performance.py` peut être activée pour afficher les clusters colorés. Décommentez l'appel correspondant dans la boucle principale afin de générer un nuage de points pour chaque jeu de données et chaque algorithme.
 
-Le fichier `rapport.pdf` contient l'analyse détaillée des algorithmes, les résultats expérimentaux et les conclusions.
+## Résultats et rapport
+- Les scripts affichent les tailles des composantes sous la forme `[taille1, taille2, ...]`.
+- `courbe_performance.py` produit un graphique des temps d'exécution (en ms) en fonction du nombre de points.
+- Le fichier `rapport.pdf` décrit l'approche, les paramètres retenus et les analyses expérimentales.
 
-## 👥 Note
-
-J'avais modifie le fichier `connectes.py' avec le paradigme du parallelism (multiprocessing) pour le rendre plus rapide.
-
+Bonnes explorations !
