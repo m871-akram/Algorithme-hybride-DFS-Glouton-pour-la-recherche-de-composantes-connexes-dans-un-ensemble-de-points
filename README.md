@@ -1,6 +1,5 @@
 # Algorithme Hybride DFS-Glouton pour la Recherche de Composantes Connexes
 
-## Aperçu
 Ce dépôt compare deux stratégies pour regrouper des points 2D en composantes connexes en fonction d'un seuil de distance. Il met face à face :
 
 1. un parcours en profondeur (DFS) récursif classique ;
@@ -37,16 +36,6 @@ Les scripts permettent de charger des jeux de points, de calculer les composante
 - `matplotlib` et `numpy` pour les graphes et visualisations.
 - (Optionnel) `Pillow` si vous utilisez le module `LeLabyrinthe`.
 
-### Installation rapide
-1. (Optionnel) Créez un environnement virtuel :
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # Windows : .\.venv\Scripts\activate
-   ```
-2. Installez les dépendances nécessaires :
-   ```bash
-   pip install matplotlib numpy
-   ```
 
 ### Vérification rapide
 ```bash
