@@ -12,7 +12,7 @@ from connectes import print_components_sizes
 from dfs_connectes import load_instance, calcul_tailles_composantes_dfs_classique
 
 
-# ----------- UTILS -----------
+
 
 def visualiser_composantes(points, tailles, titre="Composantes"):
     """Visualise les composantes connexes avec des couleurs distinctes."""
@@ -51,7 +51,7 @@ def mesurer_performance(nom_fichier, algo, algo_nom, k=None):
     return temps_ms, tailles, points
 
 
-# ----------- MAIN -----------
+
 
 def main():
     import glob, os
@@ -61,7 +61,7 @@ def main():
     fichiers = sorted(glob.glob(os.path.join(repo_dir, "exemple_*.pts")))
 
     if not fichiers:
-        print("⚠️ Aucun fichier exemple_*.pts trouvé dans le répertoire.")
+        print(" Aucun fichier exemple_*.pts trouvé dans le répertoire.")
         return
 
     algorithmes = [
