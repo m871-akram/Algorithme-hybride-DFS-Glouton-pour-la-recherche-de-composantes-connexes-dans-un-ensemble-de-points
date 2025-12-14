@@ -5,9 +5,9 @@ Ce dépôt compare deux stratégies pour regrouper des points 2D en composantes 
 1. un parcours en profondeur (DFS) récursif classique ;
 2. une variante hybride combinant une heuristique gloutonne et un DFS parallélisé via `multiprocessing`.
 
-Les scripts permettent de charger des jeux de points, de calculer les composantes, de visualiser les regroupements et de mesurer les gains de performance.
+Les scripts permettent de charger des jeux de points, de calculer les composantes, de visualiser les regroupements et de mesurer les gains de performance :
 
-## Fonctionnalités majeures
+
 - Calcul des composantes connexes avec DFS classique ou approche hybride parallèle.
 - Chargement de fichiers `.pts` et génération de jeux synthétiques.
 - Comparaison de performances avec graphiques `matplotlib`.
@@ -28,7 +28,7 @@ Les scripts permettent de charger des jeux de points, de calculer les composante
 └── README.md                 # Documentation
 ```
 
-## Prise en main
+
 
 ### Prérequis
 - Python 3.10 ou plus récent.
@@ -59,7 +59,7 @@ Exemple :
 ```
 La première ligne fixe la distance maximale autorisée. Deux points appartiennent à la même composante si leur distance est inférieure ou égale à cette valeur.
 
-## Utilisation des scripts
+
 
 #### DFS classique
 Calcule les tailles des composantes dans l'ordre décroissant.
@@ -105,4 +105,4 @@ La fonction `visualiser_composantes` de `courbe_performance.py` peut être activ
 - `courbe_performance.py` produit un graphique des temps d'exécution (en ms) en fonction du nombre de points.
 - Le fichier `rapport.pdf` décrit l'approche, les paramètres retenus et les analyses expérimentales.
 
-Bonnes explorations !
+
