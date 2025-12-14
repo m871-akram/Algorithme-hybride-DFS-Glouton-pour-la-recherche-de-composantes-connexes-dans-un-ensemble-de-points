@@ -37,7 +37,6 @@ Les scripts permettent de charger des jeux de points, de calculer les composante
 - (Optionnel) `Pillow` si vous utilisez le module `LeLabyrinthe`.
 
 
-### Vérification rapide
 ```bash
 python dfs_connectes.py exemple_1.pts
 python connectes.py exemple_1.pts
@@ -97,10 +96,10 @@ Le dossier `LeLabyrinthe/` contient un générateur de labyrinthes basé sur une
   ```
 - Le script vous demande la taille du labyrinthe ainsi que la case de départ, puis enregistre le résultat dans `LeLabyrinthe/maze.png`. Les classes utilitaires `cell.py` et `maze.py` peuvent servir d'exemple d'utilisation de DFS sur une structure quadrillée.
 
-## Visualisation optionnelle
-La fonction `visualiser_composantes` de `courbe_performance.py` peut être activée pour afficher les clusters colorés. Décommentez l'appel correspondant dans la boucle principale afin de générer un nuage de points pour chaque jeu de données et chaque algorithme.
 
 ## Résultats et rapport
+
+- La fonction `visualiser_composantes` de `courbe_performance.py` peut être activée pour afficher les clusters colorés. Décommentez l'appel correspondant dans la boucle principale afin de générer un nuage de points pour chaque jeu de données et chaque algorithme.
 - Les scripts affichent les tailles des composantes sous la forme `[taille1, taille2, ...]`.
 - `courbe_performance.py` produit un graphique des temps d'exécution (en ms) en fonction du nombre de points.
 - Le fichier `rapport.pdf` décrit l'approche, les paramètres retenus et les analyses expérimentales.
