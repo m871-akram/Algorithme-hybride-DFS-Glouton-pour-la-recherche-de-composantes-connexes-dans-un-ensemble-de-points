@@ -1,6 +1,7 @@
 """
 segment between two points.
 """
+
 from geo.quadrant import Quadrant
 
 
@@ -23,6 +24,7 @@ class Segment:
         intersection = segment1.intersection_with(segment2)
 
     """
+
     def __init__(self, points):
         """
         create a segment from an array of two points.
@@ -59,8 +61,8 @@ class Segment:
         svg for tycat.
         """
         return '<line x1="{}" y1="{}" x2="{}" y2="{}"/>\n'.format(
-            *self.endpoints[0].coordinates,
-            *self.endpoints[1].coordinates)
+            *self.endpoints[0].coordinates, *self.endpoints[1].coordinates
+        )
 
     def endpoint_not(self, point):
         """
@@ -82,12 +84,12 @@ class Segment:
         return abs(distance - self.length()) < 0.000001
 
     def __str__(self):
-        return "Segment([" + str(self.endpoints[0]) + ", " + \
-            str(self.endpoints[1]) + "])"
+        return (
+            "Segment([" + str(self.endpoints[0]) + ", " + str(self.endpoints[1]) + "])"
+        )
 
     def __repr__(self):
-        return "[" + repr(self.endpoints[0]) + ", " + \
-            repr(self.endpoints[1]) + "])"
+        return "[" + repr(self.endpoints[0]) + ", " + repr(self.endpoints[1]) + "])"
 
     def __hash__(self):
         return hash(tuple(self.endpoints))

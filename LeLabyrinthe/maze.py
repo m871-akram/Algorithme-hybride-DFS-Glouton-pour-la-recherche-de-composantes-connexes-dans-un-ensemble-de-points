@@ -4,10 +4,7 @@ from cell import Cell
 
 
 class Maze:
-    delta = {'N': (0, -1),
-             'S': (0, 1),
-             'W': (-1, 0),
-             'E': (1, 0)}
+    delta = {"N": (0, -1), "S": (0, 1), "W": (-1, 0), "E": (1, 0)}
 
     def __init__(self, nx, ny, start_):
         self.nx, self.ny = nx, ny
@@ -32,7 +29,7 @@ class Maze:
         cell_stack = []
         # current_cell = self.cell_at(0, 0)
         current_cell = self.cell_at(start_coords[0], start_coords[1])
-        current_cell.status = 'Start'
+        current_cell.status = "Start"
         n_visited = 1
 
         while n_visited < n:
@@ -48,5 +45,4 @@ class Maze:
             current_cell = neighbor[1]
             n_visited += 1
             if n_visited == n:
-                current_cell.status = 'End'
-
+                current_cell.status = "End"

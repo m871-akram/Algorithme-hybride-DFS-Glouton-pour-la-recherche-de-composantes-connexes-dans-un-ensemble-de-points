@@ -3,10 +3,12 @@ quadrants are rectangular boxes delimiting a set of items.
 they are used in display to compute image sizes.
 """
 
+
 class Quadrant:
     """
     enclosing rectangles.
     """
+
     def __init__(self, min_coordinates, max_coordinates):
         self.min_coordinates = list(min_coordinates)
         self.max_coordinates = list(max_coordinates)
@@ -15,8 +17,7 @@ class Quadrant:
         """
         return deepcopy of given quadrant.
         """
-        return Quadrant(
-            list(self.min_coordinates), list(self.max_coordinates))
+        return Quadrant(list(self.min_coordinates), list(self.max_coordinates))
 
     @classmethod
     def empty_quadrant(cls, dimension):
@@ -26,8 +27,8 @@ class Quadrant:
         min_coordinates = []
         max_coordinates = []
         for _ in range(dimension):
-            min_coordinates.append(float('+inf'))
-            max_coordinates.append(float('-inf'))
+            min_coordinates.append(float("+inf"))
+            max_coordinates.append(float("-inf"))
         return cls(min_coordinates, max_coordinates)
 
     def add_point(self, added_point):
@@ -46,8 +47,9 @@ class Quadrant:
         expands self quadrant by taking constraints from other quadrant into account.
         the new one will have the minimal size needed to contain both initial ones.
         """
-        assert len(self.min_coordinates) == len(other.min_coordinates), \
-            'merge in different spaces'
+        assert len(self.min_coordinates) == len(other.min_coordinates), (
+            "merge in different spaces"
+        )
         for i, coordinate in enumerate(other.min_coordinates):
             if self.min_coordinates[i] > coordinate:
                 self.min_coordinates[i] = coordinate

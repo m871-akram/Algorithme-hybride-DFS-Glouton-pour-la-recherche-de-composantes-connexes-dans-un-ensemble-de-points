@@ -1,9 +1,9 @@
 class Cell:
-    wall_pairs = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
+    wall_pairs = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
     def __init__(self, x, y):
         self.x, self.y = x, y
-        self.walls = {'N': True, 'S': True, 'E': True, 'W': True}
+        self.walls = {"N": True, "S": True, "E": True, "W": True}
         self.status = None
 
     def has_all_walls(self):

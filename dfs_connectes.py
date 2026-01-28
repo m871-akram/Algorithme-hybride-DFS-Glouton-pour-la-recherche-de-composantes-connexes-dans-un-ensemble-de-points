@@ -19,7 +19,11 @@ def load_instance(filename):
         with open(filename, "r") as instance_file:
             lines = iter(instance_file)
             distance = float(next(lines).strip())
-            points = [Point([float(f) for f in line.split(",")]) for line in lines if line.strip()]
+            points = [
+                Point([float(f) for f in line.split(",")])
+                for line in lines
+                if line.strip()
+            ]
         return distance, points
     except Exception as e:
         print(f"Erreur lors de la lecture de {filename} : {e}")
@@ -75,6 +79,7 @@ def main():
     Permet de lancer le calcul sur un fichier donné en argument.
     """
     from sys import argv
+
     if len(argv) < 2:
         print("Usage: python dfs_connectes.py fichier.pts")
         return

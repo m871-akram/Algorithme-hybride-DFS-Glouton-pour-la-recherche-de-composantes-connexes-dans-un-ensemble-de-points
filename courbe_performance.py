@@ -12,8 +12,6 @@ from connectes import print_components_sizes
 from dfs_connectes import load_instance, calcul_tailles_composantes_dfs_classique
 
 
-
-
 def visualiser_composantes(points, tailles, titre="Composantes"):
     """Visualise les composantes connexes avec des couleurs distinctes."""
     if not points or not tailles:
@@ -25,9 +23,11 @@ def visualiser_composantes(points, tailles, titre="Composantes"):
         id_composante.extend([idx] * taille)
 
     plt.figure(figsize=(8, 8))
-    couleurs = plt.colormaps['rainbow'](np.linspace(0, 1, max(id_composante) + 1))
+    couleurs = plt.colormaps["rainbow"](np.linspace(0, 1, max(id_composante) + 1))
     for i, p in enumerate(points):
-        plt.scatter(p.coordinates[0], p.coordinates[1], c=[couleurs[id_composante[i]]], s=10)
+        plt.scatter(
+            p.coordinates[0], p.coordinates[1], c=[couleurs[id_composante[i]]], s=10
+        )
 
     plt.title(titre)
     plt.xlabel("X")
@@ -41,7 +41,7 @@ def mesurer_performance(nom_fichier, algo, algo_nom, k=None):
     distance, points = load_instance(nom_fichier)
     if not points:
         print(f"[]  # {nom_fichier} (0 points)")
-        return float('inf'), [], points
+        return float("inf"), [], points
 
     debut = time.time()
     tailles = algo(distance, points) if k is None else algo(distance, points, k)
@@ -51,10 +51,9 @@ def mesurer_performance(nom_fichier, algo, algo_nom, k=None):
     return temps_ms, tailles, points
 
 
-
-
 def main():
-    import glob, os
+    import glob
+    import os
 
     # détecter tous les fichiers exemple_*.pts
     repo_dir = os.path.dirname(__file__)
@@ -66,7 +65,7 @@ def main():
 
     algorithmes = [
         ("DFS Classique", calcul_tailles_composantes_dfs_classique, None),
-        ("Hybride Glouton (k=8)", print_components_sizes, 8)
+        ("Hybride Glouton (k=8)", print_components_sizes, 8),
     ]
 
     print("Comparaison DFS Classique vs DFS-Glouton (k=8) sur fichiers exemple_*.pts")
@@ -93,7 +92,7 @@ def main():
     # Tracé des performances
     plt.figure(figsize=(10, 6))
     for algo_nom, temps in donnees_performance.items():
-        plt.plot(nombres_points[:len(temps)], temps, marker='o', label=algo_nom)
+        plt.plot(nombres_points[: len(temps)], temps, marker="o", label=algo_nom)
     plt.xlabel("Nombre de points")
     plt.ylabel("Temps d'exécution (ms)")
     plt.title("Comparaison DFS Classique vs DFS-Glouton (k=8)")

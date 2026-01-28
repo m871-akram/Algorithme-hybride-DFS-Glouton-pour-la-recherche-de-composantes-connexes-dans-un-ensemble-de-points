@@ -2,6 +2,7 @@
 graphical display system.
 save objects as svg files and view them in terminology
 """
+
 import os
 import getpass
 from itertools import cycle
@@ -12,15 +13,16 @@ class Displayer:
     """
     displayer handles computations for displaying a set of objects
     """
+
     svg_dimensions = (800, 600)
-    svg_colors = 'red green blue purple orange saddlebrown mediumseagreen\
+    svg_colors = "red green blue purple orange saddlebrown mediumseagreen\
                        darkolivegreen lightskyblue dimgray mediumpurple midnightblue\
                        olive chartreuse darkorchid hotpink darkred peru\
                        goldenrod mediumslateblue orangered darkmagenta\
                        darkgoldenrod mediumslateblue firebrick palegreen\
                        royalblue tan tomato springgreen pink orchid\
                        saddlebrown moccasin mistyrose cornflowerblue\
-                       darkgrey'.split()
+                       darkgrey".split()
     file_count = 0
 
     def __init__(self, bounding_quadrant):
@@ -37,25 +39,29 @@ class Displayer:
         if any(d == 0.0 for d in self.dimensions):
             raise ValueError
 
-        ratios = [a/b for a, b in zip(self.svg_dimensions, self.dimensions)]
+        ratios = [a / b for a, b in zip(self.svg_dimensions, self.dimensions)]
         scale = min(ratios)
         if scale == 0.0:
             raise ValueError
-        self.stroke_size = 3/scale
+        self.stroke_size = 3 / scale
 
     def open_svg(self, filename):
         """
         open new svg file
         """
-        svg_file = open(filename, 'w')
+        svg_file = open(filename, "w")
         svg_file.write('<svg width="{}" height="{}"'.format(*self.svg_dimensions))
         svg_file.write(' viewBox="{} {}'.format(*self.min_coordinates))
         svg_file.write(' {} {}"'.format(*self.dimensions))
         svg_file.write(' xmlns:xlink="http://www.w3.org/1999/xlink">\n')
         svg_file.write('<rect x="{}" y="{}"'.format(*self.min_coordinates))
-        svg_file.write(' width="{}" height="{}" fill="white"/>\n'.format(*self.dimensions))
-        svg_file.write('<defs><symbol id="c">\
-        <circle r="{}"/></symbol></defs>\n'.format(2*self.stroke_size))
+        svg_file.write(
+            ' width="{}" height="{}" fill="white"/>\n'.format(*self.dimensions)
+        )
+        svg_file.write(
+            '<defs><symbol id="c">\
+        <circle r="{}"/></symbol></defs>\n'.format(2 * self.stroke_size)
+        )
         svg_file.write('<g stroke-width="{}" opacity="0.7">\n'.format(self.stroke_size))
         return svg_file
 
@@ -67,6 +73,7 @@ class Displayer:
         svg_file.write("</g>\n")
         svg_file.write("</svg>\n")
         svg_file.close()
+
 
 def tycat(*things):
     """
@@ -94,7 +101,9 @@ def tycat(*things):
     try:
         display = Displayer(size)
     except ValueError:
-        print("displaying image {} failed : it is flat".format(Displayer.file_count-1))
+        print(
+            "displaying image {} failed : it is flat".format(Displayer.file_count - 1)
+        )
         return
 
     svg_file = display.open_svg(filename)
@@ -115,9 +124,10 @@ def compute_displays(things):
         inner_quadrant, inner_strings = compute_display(thing)
         quadrant.update(inner_quadrant)
         strings.extend(inner_strings)
-        strings.append('</g>\n')
+        strings.append("</g>\n")
 
     return (quadrant, strings)
+
 
 def compute_display(thing):
     """
