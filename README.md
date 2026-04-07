@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Algorithm](https://img.shields.io/badge/Algorithm-Graph%20Theory-orange)
-![Parallel](https://img.shields.io/badge/Execution-Multiprocessing-purple)
+![Parallel](https://img.shields.io/badge/Execution-Iterative%20DFS-purple)
 
 ## Overview
 
@@ -30,22 +30,29 @@ susceptible to Python's recursion limit on large dense datasets.
 
 ### 2. Hybrid Greedy + Iterative DFS (`connectes.py`) ★
 
-An optimised two-phase strategy that parallelises component discovery across
-all CPU cores via `multiprocessing.Pool`:
+An optimised two-phase strategy that resolves each component with a
+hybrid traversal, avoiding the recursion-depth limits of the classic DFS:
 
 | Phase | Strategy | When it stops |
 |-------|----------|---------------|
-| **Greedy** | Eagerly push all reachable neighbours onto a stack and keep a full index list | Component exceeds *k* nodes (default *k = 8*) |
-| **Full DFS** | Drain the remaining stack with a pure iterative DFS, incrementing only a counter | Stack is empty |
+| **Greedy** | Eagerly push all reachable neighbours onto a stack, keeping the full index list | Component exceeds *k* nodes (default *k = 8*) |
+| **Full DFS** | Drain the remaining stack iteratively, incrementing only a size counter | Stack is empty |
 
 **Why this is efficient:**
 - Small isolated clusters are fully resolved in the cheap greedy phase without
-  ever allocating the heavier DFS counter loop.
-- Large components seamlessly transition to the iterative DFS, avoiding Python
-  recursion-limit issues.
-- Independent seed points are dispatched as async tasks to a worker pool,
-  parallelising discovery across cores with a shared `Manager` list for visited
-  flags.
+  entering the heavier counting loop.
+- Large components transition seamlessly to the memory-efficient iterative DFS,
+  which stores only the stack and a counter — not the full member list.
+- The iterative stack-based DFS is immune to Python's recursion limit, making
+  it safe for arbitrarily large components.
+
+> **Design note on parallelism:** connected-component discovery is inherently
+> sequential — a component must be fully explored before the next unvisited seed
+> can be safely identified.  Dispatching seeds in parallel (e.g. via
+> `multiprocessing.Pool`) introduces a race condition where two workers
+> simultaneously claim the same neighbour, fragmenting large components.  The
+> algorithmic value of this implementation lies in the two-phase hybrid DFS, not
+> in multi-process parallelism.
 
 ---
 
@@ -57,8 +64,8 @@ all CPU cores via `multiprocessing.Pool`:
   with exhaustive DFS; classic baseline for comparison.
 - **Data Structures** — explicit stack-based iterative DFS (avoids recursion
   limits), shared `multiprocessing.Manager` list for cross-process state.
-- **Parallel Computing** — `multiprocessing.Pool` + `apply_async` to distribute
-  independent sub-problems across all available CPU cores.
+- **Memory Efficiency** — phase-2 DFS counts nodes without storing their indices,
+  keeping memory usage O(stack depth) rather than O(component size).
 - **Performance Profiling** — `courbe_performance.py` benchmarks both algorithms
   across four dataset sizes (21 → 201 points) and plots execution time vs.
   number of points using `matplotlib`.

@@ -6,15 +6,15 @@ The algorithm seeds each component from an unvisited point and uses a two-phase
 traversal:
 
 1. **Greedy phase** – eagerly expands neighbours until the component exceeds *k*
-   nodes, which filters out small isolated clusters cheaply.
-2. **Full DFS phase** – drains the remaining stack with a classic iterative DFS,
-   counting every reachable node without storing indices in memory.
+   nodes.  Small isolated clusters are fully handled here without entering the
+   heavier counting loop.
+2. **Full DFS phase** – drains the remaining stack iteratively, incrementing only
+   a counter (no index list kept), which is memory-efficient for large components.
 
-Component discovery across different seed points is parallelised via
-``multiprocessing.Pool``, distributing work over all available CPU cores.
+Seeds are evaluated sequentially to guarantee correctness: a component must be
+fully explored before the next unvisited seed can be safely identified.
 """
 
-import multiprocessing as mp
 from sys import argv
 from typing import List, Tuple
 
@@ -51,7 +51,7 @@ def compute_cluster(
     start_index: int,
     distance: float,
     points: List[Point],
-    visited: "mp.managers.ListProxy",
+    visited: List[bool],
     k: int = 8,
 ) -> int:
     """Compute the size of one connected component from a seed point.
@@ -80,8 +80,7 @@ def compute_cluster(
     """
     n = len(points)
 
-    # Guard: another process may have claimed this seed between the caller's
-    # unvisited check and this function actually executing.
+    # Caller guarantees start_index is unvisited, but guard defensively.
     if visited[start_index]:
         return 0
 
@@ -128,13 +127,17 @@ def print_components_sizes(
 ) -> List[int]:
     """Discover all connected components and (optionally) print their sizes.
 
-    Iterates over unvisited seed points and dispatches each
-    :func:`compute_cluster` call to a worker in a ``multiprocessing.Pool``,
-    enabling parallel execution across all available CPU cores.
+    Iterates sequentially over unvisited seed points, calling
+    :func:`compute_cluster` for each one.  Sequential seed evaluation is
+    required for correctness: only after one component is fully explored can we
+    be sure that the next unvisited point is a genuine new seed.
 
-    A :class:`~multiprocessing.managers.SyncManager` list is used for the
-    *visited* flags so that worker processes share a single consistent view of
-    which points have been claimed.
+    Note:
+        Parallelising seed dispatch (e.g. with ``multiprocessing.Pool``) is
+        unsound for this problem because workers race to claim the same
+        neighbours, fragmenting components that should be large.  The algorithmic
+        value here lies in the two-phase hybrid DFS inside
+        :func:`compute_cluster`, not in multi-process parallelism.
 
     Args:
         distance: Maximum Euclidean distance that connects two points.
@@ -149,25 +152,17 @@ def print_components_sizes(
     if n == 0:
         return []
 
-    # Manager provides a shared list visible to all worker processes
-    manager = mp.Manager()
-    visited = manager.list([False] * n)
+    # Plain list: visited flags shared within a single process (no IPC overhead)
+    visited: List[bool] = [False] * n
 
     sizes: List[int] = []
-    with mp.Pool(processes=mp.cpu_count()) as pool:
-        pending = []
-        for i in range(n):
-            if not visited[i]:
-                # Submit one async task per unvisited seed point
-                pending.append(
-                    pool.apply_async(compute_cluster, (i, distance, points, visited))
-                )
-
-        # Collect results; zero means the seed was already taken by another worker
-        for async_result in pending:
-            value = async_result.get()
-            if value > 0:
-                sizes.append(value)
+    for i in range(n):
+        if not visited[i]:
+            # Each seed is fully explored before advancing — this guarantees
+            # no two calls ever race over the same point.
+            size = compute_cluster(i, distance, points, visited)
+            if size > 0:
+                sizes.append(size)
 
     sizes.sort(reverse=True)
 
