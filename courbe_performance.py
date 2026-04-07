@@ -1,101 +1,151 @@
 #!/usr/bin/env python3
 """
-Compare DFS classique and hybrid greedy-DFS (k=8) for computing connected component sizes.
-Print sizes in the format [size1, size2, ..., sizeN] for each file and algorithm.
-Optionally measure performance, visualize components, and plot execution times.
+Benchmark and visualise Classic DFS vs. Hybrid Greedy-DFS performance.
+
+Scans the project directory for all ``exemple_*.pts`` files, runs both
+algorithms on each dataset, records wall-clock execution times, and produces a
+comparative performance curve (execution time vs. number of points).
 """
 
+import glob
+import os
 import time
+from typing import Callable, Dict, List, Optional, Tuple
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 from connectes import print_components_sizes
-from dfs_connectes import load_instance, calcul_tailles_composantes_dfs_classique
+from dfs_connectes import compute_component_sizes_dfs, load_instance
 
 
-def visualiser_composantes(points, tailles, titre="Composantes"):
-    """Visualise les composantes connexes avec des couleurs distinctes."""
-    if not points or not tailles:
-        print(f"Aucune composante à visualiser pour {titre}")
+def visualize_components(
+    points: List,
+    sizes: List[int],
+    title: str = "Connected Components",
+) -> None:
+    """Display a colour-coded scatter plot of the 2D point cloud.
+
+    Each component is assigned a distinct colour from the ``rainbow`` colormap.
+    Points are coloured in the same order they appear in *points*, assuming
+    *sizes* was produced by the same algorithm on the same dataset.
+
+    Args:
+        points: List of :class:`~geo.point.Point` objects to plot.
+        sizes: Component sizes in descending order.  Used to build the
+            colour-index mapping: first ``sizes[0]`` points → colour 1, next
+            ``sizes[1]`` → colour 2, and so on.
+        title: Plot window title.
+    """
+    if not points or not sizes:
+        print(f"Nothing to visualise for '{title}'.")
         return
 
-    id_composante = []
-    for idx, taille in enumerate(tailles, start=1):
-        id_composante.extend([idx] * taille)
+    # Assign a colour index to every point based on which component it belongs to
+    colour_ids: List[int] = []
+    for component_id, size in enumerate(sizes, start=1):
+        colour_ids.extend([component_id] * size)
+
+    colours = plt.colormaps["rainbow"](np.linspace(0, 1, max(colour_ids) + 1))
 
     plt.figure(figsize=(8, 8))
-    couleurs = plt.colormaps["rainbow"](np.linspace(0, 1, max(id_composante) + 1))
-    for i, p in enumerate(points):
+    for i, point in enumerate(points):
         plt.scatter(
-            p.coordinates[0], p.coordinates[1], c=[couleurs[id_composante[i]]], s=10
+            point.coordinates[0],
+            point.coordinates[1],
+            c=[colours[colour_ids[i]]],
+            s=10,
         )
 
-    plt.title(titre)
+    plt.title(title)
     plt.xlabel("X")
     plt.ylabel("Y")
     plt.grid(True)
     plt.show()
 
 
-def mesurer_performance(nom_fichier, algo, algo_nom, k=None):
-    """Mesure le temps d'exécution d'un algorithme sur un fichier."""
-    distance, points = load_instance(nom_fichier)
+def measure_performance(
+    filename: str,
+    algo: Callable,
+    algo_name: str,
+    k: Optional[int] = None,
+) -> Tuple[float, List[int], List]:
+    """Run one algorithm on one file and return its wall-clock execution time.
+
+    Args:
+        filename: Path to the ``.pts`` dataset file.
+        algo: Algorithm callable.  Must accept ``(distance, points)`` or, when
+            *k* is provided, ``(distance, points, k)``.
+        algo_name: Human-readable label printed in the console summary.
+        k: Optional greedy-phase threshold forwarded to the hybrid algorithm.
+            Pass ``None`` for the classic DFS.
+
+    Returns:
+        A tuple ``(elapsed_ms, sizes, points)`` where *elapsed_ms* is the
+        measured wall-clock time in milliseconds, *sizes* is the list of
+        component sizes returned by *algo*, and *points* is the parsed dataset.
+    """
+    distance, points = load_instance(filename)
     if not points:
-        print(f"[]  # {nom_fichier} (0 points)")
+        print(f"[]  # {filename} (0 points)")
         return float("inf"), [], points
 
-    debut = time.time()
-    tailles = algo(distance, points) if k is None else algo(distance, points, k)
-    temps_ms = (time.time() - debut) * 1000
+    start = time.time()
+    sizes = algo(distance, points) if k is None else algo(distance, points, k)
+    elapsed_ms = (time.time() - start) * 1000
 
-    print(f"# {algo_nom} - {nom_fichier} ({len(points)} points) : {temps_ms:.2f} ms")
-    return temps_ms, tailles, points
+    print(f"# {algo_name} — {filename} ({len(points)} points): {elapsed_ms:.2f} ms")
+    return elapsed_ms, sizes, points
 
 
-def main():
-    import glob
-    import os
-
-    # détecter tous les fichiers exemple_*.pts
+def main() -> None:
+    """Auto-detect example files, benchmark both algorithms, and plot results."""
     repo_dir = os.path.dirname(__file__)
-    fichiers = sorted(glob.glob(os.path.join(repo_dir, "exemple_*.pts")))
+    files = sorted(glob.glob(os.path.join(repo_dir, "exemple_*.pts")))
 
-    if not fichiers:
-        print(" Aucun fichier exemple_*.pts trouvé dans le répertoire.")
+    if not files:
+        print("No exemple_*.pts files found in the project directory.")
         return
 
-    algorithmes = [
-        ("DFS Classique", calcul_tailles_composantes_dfs_classique, None),
-        ("Hybride Glouton (k=8)", print_components_sizes, 8),
+    algorithms = [
+        ("Classic DFS", compute_component_sizes_dfs, None),
+        ("Hybrid Greedy-DFS (k=8)", print_components_sizes, 8),
     ]
 
-    print("Comparaison DFS Classique vs DFS-Glouton (k=8) sur fichiers exemple_*.pts")
+    print("Benchmarking Classic DFS vs. Hybrid Greedy-DFS (k=8)\n")
 
-    donnees_performance = {nom: [] for nom, _, _ in algorithmes}
-    nombres_points = []
+    performance_data: Dict[str, List[float]] = {name: [] for name, _, _ in algorithms}
+    point_counts: List[int] = []
 
-    for fichier in fichiers:
-        print(f"\nTest sur {os.path.basename(fichier)} :")
-        nombres_points.append(0)
+    for filepath in files:
+        print(f"--- {os.path.basename(filepath)} ---")
+        point_counts.append(0)
 
-        for algo_nom, algo, k in algorithmes:
-            temps, tailles, points = mesurer_performance(fichier, algo, algo_nom, k)
+        for algo_name, algo, k in algorithms:
+            elapsed, sizes, points = measure_performance(filepath, algo, algo_name, k)
             if not points:
                 continue
 
-            donnees_performance[algo_nom].append(temps)
-            if nombres_points[-1] == 0:
-                nombres_points[-1] = len(points)
+            performance_data[algo_name].append(elapsed)
+            if point_counts[-1] == 0:
+                point_counts[-1] = len(points)
 
-            # Visualisation (décommenter si nécessaire)
-            # visualiser_composantes(points, tailles, f"Composantes pour {os.path.basename(fichier)} ({algo_nom})")
+            # Uncomment to render a colour-coded scatter plot for each run:
+            # visualize_components(
+            #     points, sizes,
+            #     f"{os.path.basename(filepath)} — {algo_name}"
+            # )
 
-    # Tracé des performances
+        print()
+
+    # --- Performance curve ---
     plt.figure(figsize=(10, 6))
-    for algo_nom, temps in donnees_performance.items():
-        plt.plot(nombres_points[: len(temps)], temps, marker="o", label=algo_nom)
-    plt.xlabel("Nombre de points")
-    plt.ylabel("Temps d'exécution (ms)")
-    plt.title("Comparaison DFS Classique vs DFS-Glouton (k=8)")
+    for algo_name, times in performance_data.items():
+        plt.plot(point_counts[: len(times)], times, marker="o", label=algo_name)
+
+    plt.xlabel("Number of points")
+    plt.ylabel("Execution time (ms)")
+    plt.title("Classic DFS vs. Hybrid Greedy-DFS (k=8) — Performance Comparison")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
