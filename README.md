@@ -1,12 +1,5 @@
 # Hybrid DFS & Greedy Algorithm for Connected Components in 2D Point Clouds
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Algorithm](https://img.shields.io/badge/Algorithm-Graph%20Theory-orange)
-![Parallel](https://img.shields.io/badge/Execution-Iterative%20DFS-purple)
-
-## Overview
-
 Given a set of 2D points and a distance threshold *d*, two points are
 **connected** when their Euclidean distance is ≤ *d*.  The goal is to
 partition the entire point cloud into its **connected components** and report
@@ -54,26 +47,6 @@ hybrid traversal, avoiding the recursion-depth limits of the classic DFS:
 > algorithmic value of this implementation lies in the two-phase hybrid DFS, not
 > in multi-process parallelism.
 
----
-
-## Key Features & Skills Demonstrated
-
-- **Graph Theory** — connected-component decomposition on an implicit proximity
-  graph (edges are not stored; adjacency is computed on the fly).
-- **Algorithm Design** — two-phase hybrid strategy combining greedy heuristics
-  with exhaustive DFS; classic baseline for comparison.
-- **Data Structures** — explicit stack-based iterative DFS (avoids recursion
-  limits), shared `multiprocessing.Manager` list for cross-process state.
-- **Memory Efficiency** — phase-2 DFS counts nodes without storing their indices,
-  keeping memory usage O(stack depth) rather than O(component size).
-- **Performance Profiling** — `courbe_performance.py` benchmarks both algorithms
-  across four dataset sizes (21 → 201 points) and plots execution time vs.
-  number of points using `matplotlib`.
-- **Software Engineering** — full type annotations (`typing`), Google-style
-  docstrings, PEP 8 formatting, modular `geo/` geometry library.
-
----
-
 ## Project Structure
 
 ```
@@ -98,20 +71,7 @@ hybrid traversal, avoiding the recursion-depth limits of the classic DFS:
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- **Python 3.10+**
-- `matplotlib` and `numpy` (for `courbe_performance.py` only)
-
-```bash
-pip install matplotlib numpy
-```
-
-No other external dependencies are required.
-
-### Running the algorithms
+## Running the algorithms
 
 **Classic DFS on a single file:**
 ```bash
@@ -136,9 +96,6 @@ python courbe_performance.py
 
 This auto-detects all `exemple_*.pts` files, runs both algorithms on each,
 prints timing results, and opens an interactive `matplotlib` plot.
-
-> Running on a headless server?  Set `MPLBACKEND=Agg` to suppress the
-> display window and save figures to disk instead.
 
 **Generate a new synthetic dataset:**
 ```bash
@@ -174,22 +131,5 @@ Example (excerpt from `exemple_1.pts`):
 ---
 
 ## Results
-
-`courbe_performance.py` produces a chart similar to the one below, showing
-that the Hybrid Greedy-DFS consistently outperforms the Classic DFS as dataset
-size grows, thanks to early termination for small components and parallel
-execution across CPU cores.
-
-```
-Execution time (ms)
-       │
-  160  │  ● Classic DFS
-       │   \
-   80  │    ●
-       │     \
-   20  │      ●──●  Hybrid Greedy-DFS (k=8)
-       └──────────────────────────────────── Points
-          21   41  101  201
-```
 
 The full quantitative analysis and methodology are documented in `rapport.pdf`.
